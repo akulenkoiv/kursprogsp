@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane prefHeight="550.0" prefWidth="750.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.controllers.TaxCalculationController">
+    <children>
+        <Label layoutX="20.0" layoutY="20.0" text="Расчёт налога">
+            <font><Font size="24.0" /></font>
+        </Label>
+
+        <VBox layoutX="20.0" layoutY="70.0" spacing="15.0" style="-fx-border-color: #cccccc; -fx-border-radius: 5; -fx-padding: 15;" prefWidth="710.0">
+            <children>
+                <Label text="Параметры расчёта:">
+                    <font><Font size="14.0" /></font>
+                </Label>
+                <HBox spacing="20.0">
+                    <children>
+                        <VBox spacing="5.0">
+                            <Label text="Дата начала:" />
+                            <DatePicker fx:id="dpStartDate" prefWidth="180.0" />
+                        </VBox>
+                        <VBox spacing="5.0">
+                            <Label text="Дата окончания:" />
+                            <DatePicker fx:id="dpEndDate" prefWidth="180.0" />
+                        </VBox>
+                    </children>
+                </HBox>
+                <VBox spacing="5.0">
+                    <Label text="Система налогообложения:" />
+                    <ComboBox fx:id="cbRegime" prefWidth="650.0" promptText="Выберите режим налогообложения" />
+                    <Label text="💡 УСН Доходы (6%) - простой режим, налог 6% от всех поступлений" style="-fx-font-size: 11px; -fx-text-fill: #666;" wrapText="true" />
+                    <Label text="💡 УСН Д-Р (15%) - налог 15% с разницы доходов и расходов" style="-fx-font-size: 11px; -fx-text-fill: #666;" wrapText="true" />
+                </VBox>
+                <HBox spacing="10.0" alignment="CENTER_RIGHT">
+                    <children>
+                        <Button fx:id="btnCalculate" mnemonicParsing="false" onAction="#handleCalculate" text="🧮 Рассчитать налог" style="-fx-background-color: #FF9800; -fx-text-fill: white;" prefWidth="200.0" />
+                        <Button mnemonicParsing="false" onAction="#handleCalculate" text="🔄 Пересчитать" style="-fx-background-color: #2196F3; -fx-text-fill: white;" prefWidth="150.0" />
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+
+        <VBox layoutX="20.0" layoutY="320.0" spacing="15.0" style="-fx-border-color: #4CAF50; -fx-border-radius: 5; -fx-padding: 15; -fx-background-color: #f9f9f9;" prefWidth="710.0">
+            <children>
+                <Label text="Результат расчёта:">
+                    <font><Font size="14.0" /></font>
+                </Label>
+                <HBox spacing="20.0">
+                    <children>
+                        <VBox spacing="5.0">
+                            <Label text="Налоговая база:" style="-fx-font-size: 12px;" />
+                            <Label fx:id="lblTaxBase" text="—" style="-fx-font-weight: bold; -fx-font-size: 16px;" />
+                        </VBox>
+                        <VBox spacing="5.0">
+                            <Label text="Сумма налога к уплате:" style="-fx-font-weight: bold; -fx-font-size: 14px;" />
+                            <Label fx:id="lblTaxAmount" text="0.00 BYN" style="-fx-font-weight: bold; -fx-font-size: 24px; -fx-text-fill: #D32F2F;" />
+                        </VBox>
+                    </children>
+                </HBox>
+                <Label text="ℹ️ Нажмите 'Рассчитать' или 'Пересчитать' для получения результата" style="-fx-font-size: 11px; -fx-text-fill: #999;" wrapText="true" />
+            </children>
+        </VBox>
+
+        <Button layoutX="20.0" layoutY="500.0" mnemonicParsing="false" onAction="#handleBack" text="⬅️ В главное меню" />
+        <Label fx:id="lblMessage" layoutX="200.0" layoutY="505.0" textFill="RED" visible="false" />
+    </children>
+</AnchorPane>

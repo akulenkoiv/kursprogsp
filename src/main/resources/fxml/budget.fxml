@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.controllers.BudgetController">
+    <children>
+        <Label layoutX="20.0" layoutY="20.0" text="Планирование бюджета">
+            <font><Font size="24.0" /></font>
+        </Label>
+
+        <VBox layoutX="20.0" layoutY="70.0" spacing="10.0" style="-fx-border-color: #cccccc; -fx-border-radius: 5; -fx-padding: 15;">
+            <children>
+                <Label text="Параметры бюджета:">
+                    <font><Font size="16.0" /></font>
+                </Label>
+                <HBox spacing="10.0">
+                    <children>
+                        <VBox spacing="5.0">
+                            <Label text="Период:" />
+                            <DatePicker fx:id="dpPeriod" prefWidth="150.0" />
+                        </VBox>
+                        <VBox spacing="5.0">
+                            <Label text="Тип:" />
+                            <ComboBox fx:id="cbType" prefWidth="120.0" />
+                        </VBox>
+                        <VBox spacing="5.0">
+                            <Label text="Плановая сумма:" />
+                            <TextField fx:id="txtPlannedAmount" prefWidth="120.0" />
+                        </VBox>
+                        <VBox spacing="5.0">
+                            <Label text="Категория ID (опц.):" />
+                            <TextField fx:id="txtCategoryId" prefWidth="100.0" />
+                        </VBox>
+                    </children>
+                </HBox>
+                <HBox spacing="10.0">
+                    <children>
+                        <Button mnemonicParsing="false" onAction="#handleAdd" text="➕ Добавить" style="-fx-background-color: #4CAF50; -fx-text-fill: white;" />
+                        <Button mnemonicParsing="false" onAction="#handleUpdate" text="✏️ Сохранить" style="-fx-background-color: #2196F3; -fx-text-fill: white;" />
+                        <Button mnemonicParsing="false" onAction="#handleRefresh" text="🔄 Обновить" />
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+
+        <Label layoutX="20.0" layoutY="220.0" text="Список бюджетов (план/факт):" />
+
+        <TableView fx:id="tableBudgets" layoutX="20.0" layoutY="245.0" prefHeight="280.0" prefWidth="860.0">
+            <columns>
+                <TableColumn fx:id="colId" prefWidth="40.0" text="ID" />
+                <TableColumn fx:id="colPeriod" prefWidth="80.0" text="Период" />
+                <TableColumn fx:id="colType" prefWidth="70.0" text="Тип" />
+                <TableColumn fx:id="colCategory" prefWidth="100.0" text="Категория" />
+                <TableColumn fx:id="colPlan" prefWidth="80.0" text="План" />
+                <TableColumn fx:id="colFact" prefWidth="80.0" text="Факт" />
+                <TableColumn fx:id="colDeviation" prefWidth="80.0" text="Откл." />
+                <TableColumn fx:id="colPercent" prefWidth="70.0" text="Выполнение, %%" />
+                <TableColumn fx:id="colStatus" prefWidth="80.0" text="Статус" />
+                <TableColumn fx:id="colActions" prefWidth="180.0" text="Действия" />
+            </columns>
+        </TableView>
+
+        <Button layoutX="20.0" layoutY="550.0" mnemonicParsing="false" onAction="#handleBack" text="⬅️ В главное меню" />
+        <Label fx:id="lblMessage" layoutX="200.0" layoutY="555.0" visible="false" />
+    </children>
+</AnchorPane>

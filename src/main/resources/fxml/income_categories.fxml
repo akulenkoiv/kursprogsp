@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane prefHeight="500.0" prefWidth="700.0"
+            xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="client.controllers.IncomeCategoriesController">
+    <children>
+        <Label layoutX="20.0" layoutY="20.0" text="Категории доходов">
+            <font>
+                <Font size="24.0" />
+            </font>
+        </Label>
+
+        <VBox layoutX="20.0" layoutY="70.0" spacing="10.0"
+              style="-fx-border-color: #cccccc; -fx-border-radius: 5; -fx-padding: 15;">
+            <children>
+                <Label fx:id="lblFormTitle" text="Добавить категорию">
+                    <font>
+                        <Font size="16.0" />
+                    </font>
+                </Label>
+
+                <HBox spacing="10.0">
+                    <children>
+                        <VBox spacing="5.0">
+                            <children>
+                                <Label text="Название:" />
+                                <TextField fx:id="txtName" prefWidth="300.0" />
+                            </children>
+                        </VBox>
+
+                        <VBox spacing="5.0">
+                            <children>
+                                <Label text=" " />
+                                <CheckBox fx:id="chkTaxable" text="Облагается налогом" selected="true" />
+                            </children>
+                        </VBox>
+                    </children>
+                </HBox>
+
+                <HBox spacing="10.0">
+                    <children>
+                        <Button fx:id="btnAdd" mnemonicParsing="false"
+                                onAction="#handleAdd"
+                                text="➕ Добавить"
+                                style="-fx-background-color: #4CAF50; -fx-text-fill: white;" />
+                        <Button fx:id="btnUpdate" mnemonicParsing="false"
+                                onAction="#handleUpdate"
+                                text="✏️ Сохранить"
+                                style="-fx-background-color: #2196F3; -fx-text-fill: white;"
+                                visible="false" />
+                        <Button fx:id="btnCancel" mnemonicParsing="false"
+                                onAction="#handleCancel"
+                                text="❌ Отмена"
+                                visible="false" />
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+
+        <Label layoutX="20.0" layoutY="210.0" text="Список категорий:" />
+
+        <TableView fx:id="tableCategories" layoutX="20.0" layoutY="240.0"
+                   prefHeight="220.0" prefWidth="660.0">
+            <columns>
+                <TableColumn fx:id="colId" prefWidth="50.0" text="ID" />
+                <TableColumn fx:id="colName" prefWidth="300.0" text="Название" />
+                <TableColumn fx:id="colTaxable" prefWidth="150.0" text="Облагается" />
+                <TableColumn fx:id="colActions" prefWidth="160.0" text="Действия" />
+            </columns>
+        </TableView>
+
+        <Button layoutX="20.0" layoutY="470.0" mnemonicParsing="false"
+                onAction="#handleBack" text="⬅️ В главное меню" />
+
+        <Label fx:id="lblMessage" layoutX="200.0" layoutY="475.0"
+               textFill="RED" visible="false" />
+    </children>
+</AnchorPane>

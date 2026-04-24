@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="500.0" prefWidth="700.0"
+            xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="client.controllers.MainController">
+    <children>
+        <Label fx:id="lblWelcome" layoutX="20.0" layoutY="20.0" text="Загрузка...">
+            <font>
+                <Font size="18.0" />
+            </font>
+        </Label>
+
+        <Label layoutX="20.0" layoutY="50.0" text="Главное меню">
+            <font>
+                <Font size="24.0" />
+            </font>
+        </Label>
+
+        <VBox layoutX="20.0" layoutY="100.0" spacing="10.0">
+            <children>
+                <Button fx:id="btnIncomes" mnemonicParsing="false" onAction="#handleIncomes" prefWidth="200.0" text="💰 Доходы" />
+                <Button fx:id="btnExpenses" mnemonicParsing="false" onAction="#handleExpenses" prefWidth="200.0" text="💸 Расходы" />
+                <Button fx:id="btnReferences" mnemonicParsing="false" onAction="#handleReferences" prefWidth="200.0" text="📚 Справочники" />
+                <Button fx:id="btnProfit" mnemonicParsing="false" onAction="#handleProfitCalculation" prefWidth="200.0" text="🧮 Расчет прибыли" />
+                <Button fx:id="btnReports" mnemonicParsing="false" onAction="#handleReports" prefWidth="200.0" text="📊 Отчёты" />
+                <Button fx:id="btnBudget" mnemonicParsing="false" onAction="#handleBudget" prefWidth="200.0" text="📅 Бюджет" />
+                <Button fx:id="btnSettings" mnemonicParsing="false" onAction="#handleSettings" prefWidth="200.0" text="⚙️ Настройки" />
+                <Button fx:id="btnTax" mnemonicParsing="false" onAction="#handleTaxCalculation" prefWidth="200.0" text="🧾 Рассчет налогов" />
+            </children>
+        </VBox>
+
+        <Button layoutX="580.0" layoutY="450.0" mnemonicParsing="false" onAction="#handleLogout" text="Выйти" />
+    </children>
+</AnchorPane>

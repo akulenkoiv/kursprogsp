@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane prefHeight="700.0" prefWidth="900.0"
+            xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="client.controllers.ExpensesController">
+    <children>
+
+        <Label layoutX="20.0" layoutY="20.0" text="Управление расходами">
+            <font><Font size="24.0" /></font>
+        </Label>
+
+
+        <VBox layoutX="20.0" layoutY="70.0" spacing="10.0" style="-fx-border-color: #cccccc; -fx-border-radius: 5; -fx-padding: 15;">
+            <children>
+                <Label fx:id="lblFormTitle" text="Добавить новый расход">
+                    <font><Font size="16.0" /></font>
+                </Label>
+
+
+                <HBox spacing="10.0">
+                    <children>
+                        <VBox spacing="5.0">
+                            <Label text="Дата:" />
+                            <DatePicker fx:id="datePickerExpense" prefWidth="150.0" />
+                        </VBox>
+
+                        <VBox spacing="5.0">
+                            <Label text="Сумма (BYN):" />
+                            <TextField fx:id="txtAmount" prefWidth="120.0" promptText="0.00" />
+                        </VBox>
+
+                        <VBox spacing="5.0">
+                            <Label text="Категория ID:" />
+                            <TextField fx:id="txtCategoryId" prefWidth="80.0" promptText="1-5" />
+                        </VBox>
+
+                        <VBox spacing="5.0">
+                            <Label text="Контрагент ID:" />
+                            <TextField fx:id="txtCounterpartyId" prefWidth="80.0" promptText="1-8" />
+                        </VBox>
+                    </children>
+                </HBox>
+
+                <VBox spacing="5.0">
+                    <Label text="Комментарий:" />
+                    <TextField fx:id="txtComment" prefWidth="700.0" promptText="Описание..." />
+                </VBox>
+
+
+                <HBox spacing="10.0">
+                    <children>
+                        <Button fx:id="btnAddExpense" mnemonicParsing="false" onAction="#handleAddExpense" text="➕ Добавить" style="-fx-background-color: #4CAF50; -fx-text-fill: white;" />
+                        <Button fx:id="btnUpdateExpense" mnemonicParsing="false" onAction="#handleUpdateExpense" text="✏️ Сохранить" style="-fx-background-color: #2196F3; -fx-text-fill: white;" visible="false" />
+                        <Button fx:id="btnCancel" mnemonicParsing="false" onAction="#handleCancel" text="❌ Отмена" visible="false" />
+                        <Button fx:id="btnRefresh" mnemonicParsing="false" onAction="#handleRefresh" text="🔄 Обновить" />
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+
+
+        <Label layoutX="20.0" layoutY="270.0" text="Список расходов (кликните на заголовок колонки для сортировки):" />
+
+
+        <TableView fx:id="tableExpenses" layoutX="20.0" layoutY="300.0" prefHeight="330.0" prefWidth="860.0">
+            <columns>
+                <TableColumn fx:id="colId" prefWidth="50.0" text="ID" />
+                <TableColumn fx:id="colDate" prefWidth="100.0" text="Дата" />
+                <TableColumn fx:id="colAmount" prefWidth="100.0" text="Сумма" />
+                <TableColumn fx:id="colCategory" prefWidth="80.0" text="Катег." />
+                <TableColumn fx:id="colCounterparty" prefWidth="80.0" text="Контр." />
+                <TableColumn fx:id="colComment" prefWidth="350.0" text="Комментарий" />
+                <TableColumn fx:id="colActions" prefWidth="100.0" text="Действия" />
+            </columns>
+        </TableView>
+
+
+        <Button layoutX="20.0" layoutY="650.0" mnemonicParsing="false" onAction="#handleBackToMenu" text="⬅️ В главное меню" />
+        <Label fx:id="lblStats" layoutX="400.0" layoutY="655.0" text="" />
+        <Label fx:id="lblMessage" layoutX="200.0" layoutY="655.0" textFill="RED" visible="false" />
+    </children>
+</AnchorPane>
