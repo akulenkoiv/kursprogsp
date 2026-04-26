@@ -43,15 +43,13 @@ public class BudgetDAOImpl implements BudgetDAO {
     public void create(Budget budget) throws Exception {
         String sql = "INSERT INTO budgets (user_id, period, type, income_category_id, expense_category_id, planned_amount, status) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setInt(1, budget.getUserId());
             ps.setDate(2, Date.valueOf(budget.getPeriod()));
 
-
             String typeToSave = (budget.getType() == null || budget.getType().isEmpty()) ? "INCOME" : budget.getType();
             ps.setString(3, typeToSave);
-            System.out.println("[DAO] Сохраняю тип бюджета: " + typeToSave);
 
             if (budget.getIncomeCategoryId() != null && budget.getIncomeCategoryId() > 0) {
                 ps.setInt(4, budget.getIncomeCategoryId());
@@ -67,7 +65,17 @@ public class BudgetDAOImpl implements BudgetDAO {
 
             ps.setBigDecimal(6, budget.getPlannedAmount());
             ps.setString(7, budget.getStatus() != null ? budget.getStatus().name() : "DRAFT");
-            ps.executeUpdate();
+
+            int rows = ps.executeUpdate();
+            System.out.println("[DAO] Строк добавлено: " + rows);
+
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    int generatedId = rs.getInt(1);
+                    System.out.println("[DAO] Сгенерированный ID: " + generatedId);
+                    budget.setId(generatedId);
+                }
+            }
         }
     }
 
@@ -109,14 +117,19 @@ public class BudgetDAOImpl implements BudgetDAO {
         }
     }
 
+    // ✅ ИСПРАВЛЕНО: Поиск бюджета по Месяцу и Году, а не по точному дню
     @Override
     public List<Budget> findByUserIdAndPeriod(int userId, LocalDate period) throws Exception {
         List<Budget> list = new ArrayList<>();
-        String sql = "SELECT * FROM budgets WHERE user_id = ? AND period = ?";
+        // Ищем все бюджеты пользователя, у которых совпадают Месяц и Год с выбранной датой
+        String sql = "SELECT * FROM budgets WHERE user_id = ? AND MONTH(period) = ? AND YEAR(period) = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setInt(1, userId);
-            ps.setDate(2, Date.valueOf(period));
+            ps.setInt(2, period.getMonthValue()); // Месяц (1-12)
+            ps.setInt(3, period.getYear());       // Год
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(mapBudget(rs));
             }
@@ -129,12 +142,7 @@ public class BudgetDAOImpl implements BudgetDAO {
         b.setId(rs.getInt("id"));
         b.setUserId(rs.getInt("user_id"));
         b.setPeriod(rs.getDate("period").toLocalDate());
-
-
-        String dbType = rs.getString("type");
-        b.setType(dbType);
-        System.out.println("[DAO] Читаю из БД тип: " + dbType + " (для ID=" + b.getId() + ")");
-
+        b.setType(rs.getString("type"));
         b.setIncomeCategoryId(rs.getObject("income_category_id", Integer.class));
         b.setExpenseCategoryId(rs.getObject("expense_category_id", Integer.class));
         b.setPlannedAmount(rs.getBigDecimal("planned_amount"));

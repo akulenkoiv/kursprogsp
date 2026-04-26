@@ -11,16 +11,21 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.paint.Color;
+import javafx.stage.FileChooser;
 import models.dto.DateRangeDTO;
 import models.dto.ProfitLossReportDTO;
 import models.tcp.Request;
 import models.tcp.Response;
 import utility.GsonUtil;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
 public class ReportsController implements Initializable {
@@ -32,6 +37,9 @@ public class ReportsController implements Initializable {
     @FXML private Label lblTaxAmount;
     @FXML private Label lblMessage;
     @FXML private Button btnGenerate;
+
+    private ProfitLossReportDTO currentReport = null;
+    private static final DateTimeFormatter CSV_DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -60,12 +68,18 @@ public class ReportsController implements Initializable {
             if (response != null && response.getStatus() == ResponseStatus.OK) {
                 ProfitLossReportDTO report = GsonUtil.getGson().fromJson(response.getData(), ProfitLossReportDTO.class);
 
-                lblTotalIncome.setText(report.getTotalIncome().toString() + " BYN");
-                lblTotalExpense.setText(report.getTotalExpense().toString() + " BYN");
-                lblProfit.setText(report.getProfit().toString() + " BYN");
-                lblTaxAmount.setText(report.getTaxAmount().toString() + " BYN");
+                // ✅ Сохраняем отчёт для последующего экспорта
+                currentReport = report;
 
+                // ✅ Отображаем данные с форматированием
+                lblTotalIncome.setText(formatDecimal(report.getTotalIncome()) + " BYN");
+                lblTotalExpense.setText(formatDecimal(report.getTotalExpense()) + " BYN");
+                lblProfit.setText(formatDecimal(report.getProfit()) + " BYN");
+                lblTaxAmount.setText(formatDecimal(report.getTaxAmount()) + " BYN");
+
+                // ✅ Цветовая индикация прибыли
                 lblProfit.setTextFill(report.getProfit().compareTo(BigDecimal.ZERO) >= 0 ? Color.GREEN : Color.RED);
+
                 showMessage("Отчёт успешно сформирован!", false);
             } else {
                 showMessage("Ошибка: " + (response != null ? response.getMessage() : "Нет ответа"), true);
@@ -76,6 +90,80 @@ public class ReportsController implements Initializable {
             showMessage("Ошибка сети: " + e.getMessage(), true);
             clearResults();
         }
+    }
+
+    /**
+     * Обработчик кнопки "Экспорт в Excel (CSV)" — UC15
+     */
+    @FXML
+    void handleExport(javafx.event.ActionEvent event) {
+        if (currentReport == null) {
+            showMessage("Сначала сформируйте отчёт!", true);
+            return;
+        }
+
+        // 1. Диалог сохранения файла
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Сохранить отчёт");
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Таблицы Excel (CSV)", "*.csv")
+        );
+        String fileName = "Report_" + LocalDate.now().format(DateTimeFormatter.ISO_DATE) + ".csv";
+        fileChooser.setInitialFileName(fileName);
+
+        File file = fileChooser.showSaveDialog(lblProfit.getScene().getWindow());
+
+        if (file != null) {
+            try {
+                // 2. Формирование CSV-содержимого
+                StringBuilder csv = new StringBuilder();
+
+                // Заголовок
+                csv.append("ОТЧЕТ О ПРИБЫЛЯХ И УБЫТКАХ ИП").append("\n");
+                csv.append("Дата формирования: ").append(LocalDate.now().format(CSV_DATE_FORMAT)).append("\n");
+                csv.append("Период: ")
+                        .append(currentReport.getStartDate().format(CSV_DATE_FORMAT))
+                        .append(" - ")
+                        .append(currentReport.getEndDate().format(CSV_DATE_FORMAT))
+                        .append("\n\n");
+
+                // Шапка таблицы (разделитель ; для совместимости с региональными настройками Excel)
+                csv.append("Показатель;Сумма (BYN)\n");
+
+                // Данные
+                csv.append("Доходы;").append(formatDecimal(currentReport.getTotalIncome())).append("\n");
+                csv.append("Расходы;").append(formatDecimal(currentReport.getTotalExpense())).append("\n");
+                csv.append("Прибыль до налогообложения;").append(formatDecimal(currentReport.getProfit())).append("\n");
+                csv.append("Налог (УСН 6%);").append(formatDecimal(currentReport.getTaxAmount())).append("\n");
+
+                // Чистая прибыль (если есть в DTO, иначе рассчитываем)
+                BigDecimal netProfit = currentReport.getProfit().subtract(currentReport.getTaxAmount());
+                csv.append("ЧИСТАЯ ПРИБЫЛЬ;").append(formatDecimal(netProfit)).append("\n");
+
+                // 3. Запись в файл с UTF-8+BOM для корректного открытия в Excel
+                try (BufferedWriter writer = new BufferedWriter(
+                        new FileWriter(file, java.nio.charset.Charset.forName("UTF-8")))) {
+                    writer.write('\ufeff'); // BOM для Excel
+                    writer.write(csv.toString());
+                }
+
+                showAlert(Alert.AlertType.INFORMATION, "Успех",
+                        "Отчёт сохранён:\n" + file.getAbsolutePath());
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                showAlert(Alert.AlertType.ERROR, "Ошибка",
+                        "Не удалось сохранить файл:\n" + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Форматирование BigDecimal для отображения
+     */
+    private String formatDecimal(BigDecimal value) {
+        if (value == null) return "0.00";
+        return String.format("%.2f", value);
     }
 
     @FXML
@@ -94,11 +182,21 @@ public class ReportsController implements Initializable {
         lblTotalExpense.setText("0.00 BYN");
         lblProfit.setText("0.00 BYN");
         lblTaxAmount.setText("0.00 BYN");
+        currentReport = null;
     }
 
     private void showMessage(String msg, boolean isError) {
         lblMessage.setText(msg);
         lblMessage.setTextFill(isError ? Color.RED : Color.GREEN);
         lblMessage.setVisible(true);
+    }
+
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.initOwner(lblProfit.getScene().getWindow());
+        alert.showAndWait();
     }
 }

@@ -16,10 +16,10 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
+import models.dto.BudgetDTO;
 import models.dto.BudgetReportDTO;
 import models.dto.DateRangeDTO;
 import models.dto.DeleteRequestDTO;
-import models.entities.Budget;
 import models.tcp.Request;
 import models.tcp.Response;
 import utility.GsonUtil;
@@ -58,7 +58,10 @@ public class BudgetController implements Initializable {
         cbType.getItems().addAll("Доход", "Расход");
         cbType.getSelectionModel().selectFirst();
 
-        dpPeriod.setValue(LocalDate.now().withDayOfMonth(1));
+        // Устанавливаем дату по умолчанию (1-е число текущего месяца)
+        LocalDate defaultDate = LocalDate.now().withDayOfMonth(1);
+        dpPeriod.setValue(defaultDate);
+
         txtPlannedAmount.setText("0.00");
 
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
@@ -69,7 +72,7 @@ public class BudgetController implements Initializable {
             String display;
             if (type == null || type.isEmpty()) {
                 display = "Расход";
-            } else if (type.equalsIgnoreCase("INCOME")) {
+            } else if (type.equalsIgnoreCase("INCOME") || type.equalsIgnoreCase("income")) {
                 display = "Доход";
             } else {
                 display = "Расход";
@@ -86,6 +89,16 @@ public class BudgetController implements Initializable {
 
         setupActionColumn();
         tableBudgets.setItems(budgetList);
+
+        // ✅ АВТООБНОВЛЕНИЕ: при смене даты в DatePicker таблица перезагружается
+        // Теперь система будет искать бюджет на весь выбранный месяц
+        dpPeriod.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                System.out.println("[UI] Дата изменена на: " + newVal + " (ищем бюджет на этот месяц)");
+                loadBudgets();
+            }
+        });
+
         loadBudgets();
     }
 
@@ -127,14 +140,37 @@ public class BudgetController implements Initializable {
     }
 
     private void loadBudgets() {
+        LocalDate selectedDate = dpPeriod.getValue();
+        if (selectedDate == null) {
+            showMessage("Выберите дату периода!", true);
+            return;
+        }
+
+        System.out.println("[Client] Загрузка бюджетов за месяц: " + selectedDate.getMonth() + " " + selectedDate.getYear());
+
         try {
-            Request req = new Request(RequestType.GET_BUDGET_REPORT, GsonUtil.getGson().toJson(new DateRangeDTO(dpPeriod.getValue(), dpPeriod.getValue())));
+            // Отправляем выбранную дату. Сервер сам поймет, что нужно искать бюджет на весь этот месяц.
+            Request req = new Request(RequestType.GET_BUDGET_REPORT,
+                    GsonUtil.getGson().toJson(new DateRangeDTO(selectedDate, selectedDate)));
+
             ClientSocket.getInstance().sendRequest(req);
             Response resp = ClientSocket.getInstance().readResponse();
+
             if (resp != null && resp.getStatus() == ResponseStatus.OK) {
-                List<BudgetReportDTO> items = GsonUtil.getGson().fromJson(resp.getData(), new com.google.gson.reflect.TypeToken<List<BudgetReportDTO>>(){}.getType());
-                budgetList.clear();
-                if (items != null) budgetList.addAll(items);
+                List<BudgetReportDTO> items = GsonUtil.getGson().fromJson(resp.getData(),
+                        new com.google.gson.reflect.TypeToken<List<BudgetReportDTO>>(){}.getType());
+
+                // ✅ ОБНОВЛЕНИЕ В JAVA FX ПОТОКЕ
+                javafx.application.Platform.runLater(() -> {
+                    budgetList.clear();
+                    if (items != null) {
+                        budgetList.addAll(items);
+                        tableBudgets.refresh(); // Принудительное обновление визуала
+                    }
+                    System.out.println("[Client] Отображено записей: " + budgetList.size());
+                });
+            } else {
+                showMessage("Ошибка загрузки: " + (resp != null ? resp.getMessage() : "Нет ответа"), true);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -144,54 +180,62 @@ public class BudgetController implements Initializable {
 
     @FXML
     void handleAdd(javafx.event.ActionEvent e) {
-        if (txtPlannedAmount.getText().isEmpty() || dpPeriod.getValue() == null) {
-            showMessage("Заполните период и сумму!", true);
+        LocalDate selectedDate = dpPeriod.getValue();
+        if (selectedDate == null) {
+            showMessage("Выберите период!", true);
             return;
         }
 
-        int selectedIndex = cbType.getSelectionModel().getSelectedIndex();
-        String typeEnglish = (selectedIndex == 0) ? "INCOME" : "EXPENSE";
-
-        System.out.println("=== ДОБАВЛЕНИЕ БЮДЖЕТА ===");
-        System.out.println("Выбранный индекс: " + selectedIndex);
-        System.out.println("Тип (рус): " + cbType.getValue());
-        System.out.println("Тип (англ): " + typeEnglish);
-        System.out.println("Сумма: " + txtPlannedAmount.getText());
+        String rawAmount = txtPlannedAmount.getText();
+        if (rawAmount == null || rawAmount.trim().isEmpty()) {
+            showMessage("Введите плановую сумму!", true);
+            return;
+        }
 
         try {
-            Budget b = new Budget();
-            b.setPeriod(dpPeriod.getValue());
-            b.setType(typeEnglish);
-            b.setPlannedAmount(new BigDecimal(txtPlannedAmount.getText().replace(",", ".")));
-
-            if (!txtCategoryId.getText().isEmpty()) {
-                int catId = Integer.parseInt(txtCategoryId.getText());
-                if ("INCOME".equals(typeEnglish)) {
-                    b.setIncomeCategoryId(catId);
-                    b.setExpenseCategoryId(null);
-                    System.out.println("Установлен income_category_id: " + catId);
-                } else {
-                    b.setExpenseCategoryId(catId);
-                    b.setIncomeCategoryId(null);
-                    System.out.println("Установлен expense_category_id: " + catId);
-                }
-            } else {
-                b.setIncomeCategoryId(null);
-                b.setExpenseCategoryId(null);
+            // Безопасная обработка суммы
+            String safeAmount = rawAmount.replace(",", ".").replaceAll("\\s+", "");
+            if (!safeAmount.matches("^\\d+(\\.\\d+)?$")) {
+                showMessage("Некорректная сумма. Используйте только цифры и точку.", true);
+                return;
             }
 
-            String json = GsonUtil.getGson().toJson(b);
-            System.out.println("JSON: " + json);
+            int selectedIndex = cbType.getSelectionModel().getSelectedIndex();
+            String typeEnglish = (selectedIndex == 0) ? "INCOME" : "EXPENSE";
 
+            System.out.println("[Client] Добавление: Месяц=" + selectedDate.getMonth() + ", Тип=" + typeEnglish + ", Сумма=" + safeAmount);
+
+            BudgetDTO dto = new BudgetDTO();
+
+            // ✅ ИСПРАВЛЕНО: Бюджет всегда привязывается к 1-му числу месяца.
+            // Это стандартная практика: "Бюджет на Апрель" хранится как "01.04.2026".
+            dto.setPeriod(selectedDate.withDayOfMonth(1));
+
+            dto.setType(typeEnglish);
+            dto.setPlannedAmount(new BigDecimal(safeAmount));
+
+            String catText = txtCategoryId.getText().trim();
+            if (!catText.isEmpty()) {
+                try {
+                    dto.setCategoryId(Integer.parseInt(catText));
+                } catch (NumberFormatException ex) {
+                    showMessage("ID категории должен быть числом", true);
+                    return;
+                }
+            } else {
+                dto.setCategoryId(null);
+            }
+            dto.setStatus("DRAFT");
+
+            String json = GsonUtil.getGson().toJson(dto);
             Request req = new Request(RequestType.ADD_BUDGET, json);
             ClientSocket.getInstance().sendRequest(req);
             Response resp = ClientSocket.getInstance().readResponse();
 
             if (resp != null && resp.getStatus() == ResponseStatus.OK) {
-                String typeDisplay = "INCOME".equals(typeEnglish) ? "Доход" : "Расход";
-                showMessage("Бюджет успешно добавлен! Тип: " + typeDisplay, false);
+                showMessage("Бюджет успешно добавлен!", false);
                 clearForm();
-                loadBudgets();
+                loadBudgets(); // Обновляем таблицу
             } else {
                 showMessage("Ошибка: " + (resp != null ? resp.getMessage() : "Нет ответа"), true);
             }
@@ -212,33 +256,24 @@ public class BudgetController implements Initializable {
         String typeEnglish = (selectedIndex == 0) ? "INCOME" : "EXPENSE";
 
         try {
-            Budget b = new Budget();
-            b.setId(currentEditing.getId());
-            b.setPeriod(currentEditing.getPeriod());
-            b.setType(typeEnglish);
-            b.setPlannedAmount(new BigDecimal(txtPlannedAmount.getText().replace(",", ".")));
+            BudgetDTO dto = new BudgetDTO();
+            dto.setId(currentEditing.getId());
+            dto.setPeriod(currentEditing.getPeriod());
+            dto.setType(typeEnglish);
+            dto.setPlannedAmount(new BigDecimal(txtPlannedAmount.getText().replace(",", ".")));
 
             if (!txtCategoryId.getText().isEmpty()) {
-                int catId = Integer.parseInt(txtCategoryId.getText());
-                if ("INCOME".equals(typeEnglish)) {
-                    b.setIncomeCategoryId(catId);
-                    b.setExpenseCategoryId(null);
-                } else {
-                    b.setExpenseCategoryId(catId);
-                    b.setIncomeCategoryId(null);
-                }
+                dto.setCategoryId(Integer.parseInt(txtCategoryId.getText()));
             } else {
-                b.setIncomeCategoryId(null);
-                b.setExpenseCategoryId(null);
+                dto.setCategoryId(null);
             }
 
-            Request req = new Request(RequestType.UPDATE_BUDGET, GsonUtil.getGson().toJson(b));
+            Request req = new Request(RequestType.UPDATE_BUDGET, GsonUtil.getGson().toJson(dto));
             ClientSocket.getInstance().sendRequest(req);
             Response resp = ClientSocket.getInstance().readResponse();
 
             if (resp != null && resp.getStatus() == ResponseStatus.OK) {
-                String typeDisplay = "INCOME".equals(typeEnglish) ? "Доход" : "Расход";
-                showMessage("Бюджет успешно обновлен! Тип: " + typeDisplay, false);
+                showMessage("Бюджет успешно обновлен!", false);
                 clearForm();
                 loadBudgets();
             } else {
@@ -253,7 +288,7 @@ public class BudgetController implements Initializable {
     private void handleEdit(BudgetReportDTO item) {
         currentEditing = item;
 
-        if ("INCOME".equals(item.getType())) {
+        if ("INCOME".equalsIgnoreCase(item.getType())) {
             cbType.getSelectionModel().select(0);
         } else {
             cbType.getSelectionModel().select(1);
@@ -324,7 +359,7 @@ public class BudgetController implements Initializable {
 
     private void clearForm() {
         cbType.getSelectionModel().selectFirst();
-        dpPeriod.setValue(LocalDate.now().withDayOfMonth(1));
+        // Не сбрасываем дату
         txtPlannedAmount.setText("0.00");
         txtCategoryId.clear();
         currentEditing = null;

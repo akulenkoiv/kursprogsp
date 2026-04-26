@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client.controllers.UsersController">
+    <children>
+        <Label layoutX="20.0" layoutY="20.0" text="Управление пользователями">
+            <font><Font size="24.0" /></font>
+        </Label>
+
+        <VBox layoutX="20.0" layoutY="70.0" spacing="10.0" style="-fx-border-color: #cccccc; -fx-border-radius: 5; -fx-padding: 15;">
+            <children>
+                <Label text="Добавить нового пользователя">
+                    <font><Font size="16.0" /></font>
+                </Label>
+                <HBox spacing="10.0">
+                    <children>
+                        <VBox spacing="5.0">
+                            <Label text="Логин:" />
+                            <TextField fx:id="txtLogin" prefWidth="200.0" />
+                        </VBox>
+                        <VBox spacing="5.0">
+                            <Label text="Пароль:" />
+                            <PasswordField fx:id="txtPassword" prefWidth="200.0" />
+                        </VBox>
+                        <VBox spacing="5.0">
+                            <Label text="Роль:" />
+                            <ComboBox fx:id="cbRole" prefWidth="150.0" />
+                        </VBox>
+                    </children>
+                </HBox>
+                <HBox spacing="10.0">
+                    <children>
+                        <Button mnemonicParsing="false" onAction="#handleAddUser" text="➕ Добавить" style="-fx-background-color: #4CAF50; -fx-text-fill: white;" />
+                        <Button mnemonicParsing="false" onAction="#handleRefresh" text="🔄 Обновить" />
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+
+        <Label layoutX="20.0" layoutY="220.0" text="Список пользователей:" />
+
+        <TableView fx:id="tableUsers" layoutX="20.0" layoutY="245.0" prefHeight="280.0" prefWidth="760.0">
+            <columns>
+                <TableColumn fx:id="colId" prefWidth="50.0" text="ID" />
+                <TableColumn fx:id="colLogin" prefWidth="200.0" text="Логин" />
+                <TableColumn fx:id="colRole" prefWidth="200.0" text="Роль" />
+                <TableColumn fx:id="colStatus" prefWidth="150.0" text="Статус" />
+                <TableColumn fx:id="colActions" prefWidth="160.0" text="Действия" />
+            </columns>
+        </TableView>
+
+        <Button layoutX="20.0" layoutY="550.0" mnemonicParsing="false" onAction="#handleBack" text="⬅️ В главное меню" />
+        <Label fx:id="lblMessage" layoutX="200.0" layoutY="555.0" textFill="RED" visible="false" />
+    </children>
+</AnchorPane>

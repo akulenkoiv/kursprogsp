@@ -30,7 +30,7 @@
                 <Button fx:id="btnProfit" mnemonicParsing="false" onAction="#handleProfitCalculation" prefWidth="200.0" text="🧮 Расчет прибыли" />
                 <Button fx:id="btnReports" mnemonicParsing="false" onAction="#handleReports" prefWidth="200.0" text="📊 Отчёты" />
                 <Button fx:id="btnBudget" mnemonicParsing="false" onAction="#handleBudget" prefWidth="200.0" text="📅 Бюджет" />
-                <Button fx:id="btnSettings" mnemonicParsing="false" onAction="#handleSettings" prefWidth="200.0" text="⚙️ Настройки" />
+                <Button fx:id="btnSettings" mnemonicParsing="false" onAction="#handleSettings" prefWidth="200.0" text="⚙️ Управление Пользователями" />
                 <Button fx:id="btnTax" mnemonicParsing="false" onAction="#handleTaxCalculation" prefWidth="200.0" text="🧾 Рассчет налогов" />
             </children>
         </VBox>

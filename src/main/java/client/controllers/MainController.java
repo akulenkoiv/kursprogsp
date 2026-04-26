@@ -2,10 +2,12 @@ package client.controllers;
 
 import client.ClientApp;
 import client.utility.ClientSocket;
+import enums.Roles;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.event.ActionEvent;
 import models.entities.User;
@@ -14,109 +16,100 @@ import java.io.IOException;
 
 public class MainController {
     @FXML private Label lblWelcome;
+    @FXML private Button btnIncomes;
+    @FXML private Button btnExpenses;
+    @FXML private Button btnReferences;
+    @FXML private Button btnProfit;
+    @FXML private Button btnReports;
+    @FXML private Button btnBudget;
+    @FXML private Button btnSettings;
+    @FXML private Button btnTax;
 
     @FXML
     public void initialize() {
         User user = ClientSocket.getInstance().getCurrentUser();
         if (user != null) {
-            lblWelcome.setText("Добро пожаловать, " + user.getLogin() + " (Роль: " + user.getRoleId() + ")");
+            lblWelcome.setText("Добро пожаловать, " + user.getLogin() + " (Роль: " + getRoleName(user.getRoleId()) + ")");
+            applyRoleRestrictions(user.getRoleId());
+        }
+    }
+
+    private void applyRoleRestrictions(int roleId) {
+        // Ограничения для Бухгалтера
+        if (roleId == Roles.ACCOUNTANT.getLevel()) {
+            if (btnReferences != null) btnReferences.setVisible(false);
+            if (btnBudget != null) btnBudget.setVisible(false);
+        }
+
+        // Ограничения для всех, кроме Администратора
+        if (roleId != Roles.ADMIN.getLevel()) {
+            if (btnSettings != null) btnSettings.setVisible(false);
+        }
+    }
+
+    private String getRoleName(int roleId) {
+        switch (roleId) {
+            case 3: return "Администратор";
+            case 2: return "ИП";
+            case 1: return "Бухгалтер";
+            default: return "Неизвестно";
         }
     }
 
     @FXML
-    void handleIncomes(ActionEvent event) {
-        try {
-            Parent root = FXMLLoader.load(getClass().getResource("/fxml/incomes.fxml"));
-            ClientApp.getPrimaryStage().setScene(new Scene(root));
-            ClientApp.getPrimaryStage().setTitle("Доходы");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    void handleIncomes(ActionEvent event) { navigateTo("/fxml/incomes.fxml", "Доходы"); }
 
     @FXML
-    void handleExpenses(ActionEvent event) {
-        try {
-            Parent root = FXMLLoader.load(getClass().getResource("/fxml/expenses.fxml"));
-            ClientApp.getPrimaryStage().setScene(new Scene(root));
-            ClientApp.getPrimaryStage().setTitle("Расходы");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    void handleExpenses(ActionEvent event) { navigateTo("/fxml/expenses.fxml", "Расходы"); }
 
     @FXML
-    void handleReferences(ActionEvent event) {
-        try {
-            Parent root = FXMLLoader.load(getClass().getResource("/fxml/references.fxml"));
-            ClientApp.getPrimaryStage().setScene(new Scene(root));
-            ClientApp.getPrimaryStage().setTitle("Справочники");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    void handleReferences(ActionEvent event) { navigateTo("/fxml/references.fxml", "Справочники"); }
 
     @FXML
-    void handleProfitCalculation(ActionEvent event) {
-        try {
-            Parent root = FXMLLoader.load(getClass().getResource("/fxml/profit_calculation.fxml"));
-            ClientApp.getPrimaryStage().setScene(new Scene(root));
-            ClientApp.getPrimaryStage().setTitle("Расчёт прибыли");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    void handleProfitCalculation(ActionEvent event) { navigateTo("/fxml/profit_calculation.fxml", "Расчёт прибыли"); }
 
     @FXML
-    void handleTaxCalculation(ActionEvent event) {
-        try {
-            Parent root = FXMLLoader.load(getClass().getResource("/fxml/tax_calculation.fxml"));
-            ClientApp.getPrimaryStage().setScene(new Scene(root));
-            ClientApp.getPrimaryStage().setTitle("Расчёт налога");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    void handleTaxCalculation(ActionEvent event) { navigateTo("/fxml/tax_calculation.fxml", "Расчёт налога"); }
 
     @FXML
-    void handleReports(ActionEvent event) {
-        try {
-            Parent root = FXMLLoader.load(getClass().getResource("/fxml/reports.fxml"));
-            ClientApp.getPrimaryStage().setScene(new Scene(root));
-            ClientApp.getPrimaryStage().setTitle("Отчёты");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    void handleReports(ActionEvent event) { navigateTo("/fxml/reports.fxml", "Отчёты"); }
 
     @FXML
-    void handleBudget(ActionEvent event) {
-        try {
-            Parent root = FXMLLoader.load(getClass().getResource("/fxml/budget.fxml"));
-            ClientApp.getPrimaryStage().setScene(new Scene(root));
-            ClientApp.getPrimaryStage().setTitle("Бюджет");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    void handleBudget(ActionEvent event) { navigateTo("/fxml/budget.fxml", "Бюджет"); }
 
     @FXML
     void handleSettings(ActionEvent event) {
-        try {
-            Parent root = FXMLLoader.load(getClass().getResource("/fxml/settings.fxml"));
-            ClientApp.getPrimaryStage().setScene(new Scene(root));
-            ClientApp.getPrimaryStage().setTitle("Настройки");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        navigateTo("/fxml/users.fxml", "Управление пользователями");
     }
 
     @FXML
     void handleLogout(ActionEvent event) {
+        // 1. Принудительно закрываем сокет
         ClientSocket.getInstance().disconnect();
+
         try {
-            new ClientApp().showLoginScreen();
-        } catch (Exception e) {
+            // 2. Делаем паузу 300мс, чтобы ОС успела освободить порт (решает проблему timeout)
+            Thread.sleep(300);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        try {
+            // 3. Возвращаемся на экран входа
+            Parent root = FXMLLoader.load(getClass().getResource("/fxml/login.fxml"));
+            ClientApp.getPrimaryStage().setScene(new Scene(root));
+            ClientApp.getPrimaryStage().setTitle("Вход");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void navigateTo(String fxmlPath, String title) {
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));
+            ClientApp.getPrimaryStage().setScene(new Scene(root));
+            ClientApp.getPrimaryStage().setTitle(title);
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

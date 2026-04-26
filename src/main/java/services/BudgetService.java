@@ -54,44 +54,46 @@ public class BudgetService {
     }
 
     public List<BudgetReportDTO> generateBudgetReport(int userId, LocalDate period) throws Exception {
+        System.out.println("[Service] Запрос бюджетов: userId=" + userId + ", period=" + period);
+
         List<Budget> budgets = budgetDAO.findByUserIdAndPeriod(userId, period);
+        System.out.println("[Service] Найдено в БД: " + budgets.size() + " бюджетов");
+
         List<BudgetReportDTO> reports = new ArrayList<>();
 
         for (Budget b : budgets) {
+            System.out.println("[Service] Обработка бюджета ID=" + b.getId() + ", type=" + b.getType());
+
             BigDecimal factAmount = BigDecimal.ZERO;
             String categoryName = "Общий";
 
-            System.out.println("=== ОБРАБОТКА БЮДЖЕТА ===");
-            System.out.println("Budget ID: " + b.getId());
-            System.out.println("Type: " + b.getType());
-            System.out.println("Income cat ID: " + b.getIncomeCategoryId());
-            System.out.println("Expense cat ID: " + b.getExpenseCategoryId());
-
-            if ("INCOME".equals(b.getType())) {
-
-                if (b.getIncomeCategoryId() > 0) {
+            if ("INCOME".equalsIgnoreCase(b.getType())) {
+                if (b.getIncomeCategoryId() != null && b.getIncomeCategoryId() > 0) {
                     List<Income> incomes = transactionDAO.getIncomes(userId, period.withDayOfMonth(1), period.withDayOfMonth(period.lengthOfMonth()));
+                    System.out.println("[Service] Доходов найдено: " + incomes.size());
+
                     for (Income i : incomes) {
-                        if (i.getCategoryId() == b.getIncomeCategoryId()) {
+                        if (i.getCategoryId() > 0 && i.getCategoryId() == b.getIncomeCategoryId()) {
                             factAmount = factAmount.add(i.getAmount());
                         }
                     }
-                    categoryName = "Категория ID: " + b.getIncomeCategoryId();
+                    categoryName = "Категория дохода ID: " + b.getIncomeCategoryId();
                 } else {
                     List<Income> incomes = transactionDAO.getIncomes(userId, period.withDayOfMonth(1), period.withDayOfMonth(period.lengthOfMonth()));
                     for (Income i : incomes) factAmount = factAmount.add(i.getAmount());
                     categoryName = "Все доходы";
                 }
-            } else if ("EXPENSE".equals(b.getType())) {
-
-                if (b.getExpenseCategoryId() > 0) {
+            } else if ("EXPENSE".equalsIgnoreCase(b.getType())) {
+                if (b.getExpenseCategoryId() != null && b.getExpenseCategoryId() > 0) {
                     List<Expense> expenses = transactionDAO.getExpenses(userId, period.withDayOfMonth(1), period.withDayOfMonth(period.lengthOfMonth()));
+                    System.out.println("[Service] Расходов найдено: " + expenses.size());
+
                     for (Expense e : expenses) {
-                        if (e.getCategoryId() == b.getExpenseCategoryId()) {
+                        if (e.getCategoryId() > 0 && e.getCategoryId() == b.getExpenseCategoryId()) {
                             factAmount = factAmount.add(e.getAmount());
                         }
                     }
-                    categoryName = "Категория ID: " + b.getExpenseCategoryId();
+                    categoryName = "Категория расхода ID: " + b.getExpenseCategoryId();
                 } else {
                     List<Expense> expenses = transactionDAO.getExpenses(userId, period.withDayOfMonth(1), period.withDayOfMonth(period.lengthOfMonth()));
                     for (Expense e : expenses) factAmount = factAmount.add(e.getAmount());
@@ -106,11 +108,16 @@ public class BudgetService {
                         .multiply(BigDecimal.valueOf(100)).doubleValue();
             }
 
-            reports.add(new BudgetReportDTO(
+            BudgetReportDTO dto = new BudgetReportDTO(
                     b.getId(), b.getPeriod(), b.getType(), categoryName,
                     b.getPlannedAmount(), factAmount, deviation, percent, b.getStatus().name()
-            ));
+            );
+
+            System.out.println("[Service] Создан DTO: " + dto);
+            reports.add(dto);
         }
+
+        System.out.println("[Service] Всего отчётов: " + reports.size());
         return reports;
     }
 }
