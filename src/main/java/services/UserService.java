@@ -19,8 +19,7 @@ public class UserService implements Service<User, Integer> {
 
     @Override
     public void saveEntity(User entity) throws Exception {
-        // ХЕШИРОВАНИЕ ПАРОЛЯ ПЕРЕД СОХРАНЕНИЕМ
-        // entity.getPasswordHash() здесь содержит PLAIN текст от клиента
+
         String plainPassword = entity.getPasswordHash();
         if (plainPassword != null && !plainPassword.isEmpty()) {
             entity.setPasswordHash(PasswordHasher.hash(plainPassword));

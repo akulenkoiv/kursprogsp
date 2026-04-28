@@ -223,7 +223,7 @@ public class ExpensesController implements Initializable {
         alert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 try {
-                    // Используем DTO для удаления
+
                     String payload = GsonUtil.getGson().toJson(new DeleteRequestDTO(expense.getId()));
                     Request request = new Request(RequestType.DELETE_EXPENSE, payload);
 

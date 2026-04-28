@@ -24,11 +24,11 @@ public class ClientApp extends Application {
 
     public void showLoginScreen() throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
-        //создает граф объектов интерфейса
+
         Parent root = loader.load();
         primaryStage.setScene(new Scene(root));
         primaryStage.setTitle("Авторизация - ИП Финансы");
-        primaryStage.show(); // создание сцены
+        primaryStage.show();
     }
 
     public void showMainScreen() throws IOException {

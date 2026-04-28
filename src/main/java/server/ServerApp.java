@@ -14,7 +14,7 @@ public class ServerApp {
     public static void main(String[] args) {
         int port = Config.getIntProperty("server.port");
         int poolSize = Config.getIntProperty("server.thread.pool.size");
-        ExecutorService threadPool = Executors.newFixedThreadPool(poolSize); //6
+        ExecutorService threadPool = Executors.newFixedThreadPool(poolSize); //М
 
         try (ServerSocket serverSocket = new ServerSocket(port)) { //1
             System.out.println("Server started on port " + port);

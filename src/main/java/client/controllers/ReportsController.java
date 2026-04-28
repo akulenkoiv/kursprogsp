@@ -68,16 +68,16 @@ public class ReportsController implements Initializable {
             if (response != null && response.getStatus() == ResponseStatus.OK) {
                 ProfitLossReportDTO report = GsonUtil.getGson().fromJson(response.getData(), ProfitLossReportDTO.class);
 
-                // ✅ Сохраняем отчёт для последующего экспорта
+
                 currentReport = report;
 
-                // ✅ Отображаем данные с форматированием
+
                 lblTotalIncome.setText(formatDecimal(report.getTotalIncome()) + " BYN");
                 lblTotalExpense.setText(formatDecimal(report.getTotalExpense()) + " BYN");
                 lblProfit.setText(formatDecimal(report.getProfit()) + " BYN");
                 lblTaxAmount.setText(formatDecimal(report.getTaxAmount()) + " BYN");
 
-                // ✅ Цветовая индикация прибыли
+
                 lblProfit.setTextFill(report.getProfit().compareTo(BigDecimal.ZERO) >= 0 ? Color.GREEN : Color.RED);
 
                 showMessage("Отчёт успешно сформирован!", false);
@@ -92,9 +92,7 @@ public class ReportsController implements Initializable {
         }
     }
 
-    /**
-     * Обработчик кнопки "Экспорт в Excel (CSV)" — UC15
-     */
+
     @FXML
     void handleExport(javafx.event.ActionEvent event) {
         if (currentReport == null) {
@@ -102,7 +100,7 @@ public class ReportsController implements Initializable {
             return;
         }
 
-        // 1. Диалог сохранения файла
+
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Сохранить отчёт");
         fileChooser.getExtensionFilters().add(
@@ -115,10 +113,10 @@ public class ReportsController implements Initializable {
 
         if (file != null) {
             try {
-                // 2. Формирование CSV-содержимого
+
                 StringBuilder csv = new StringBuilder();
 
-                // Заголовок
+
                 csv.append("ОТЧЕТ О ПРИБЫЛЯХ И УБЫТКАХ ИП").append("\n");
                 csv.append("Дата формирования: ").append(LocalDate.now().format(CSV_DATE_FORMAT)).append("\n");
                 csv.append("Период: ")
@@ -127,20 +125,20 @@ public class ReportsController implements Initializable {
                         .append(currentReport.getEndDate().format(CSV_DATE_FORMAT))
                         .append("\n\n");
 
-                // Шапка таблицы (разделитель ; для совместимости с региональными настройками Excel)
+
                 csv.append("Показатель;Сумма (BYN)\n");
 
-                // Данные
+
                 csv.append("Доходы;").append(formatDecimal(currentReport.getTotalIncome())).append("\n");
                 csv.append("Расходы;").append(formatDecimal(currentReport.getTotalExpense())).append("\n");
                 csv.append("Прибыль до налогообложения;").append(formatDecimal(currentReport.getProfit())).append("\n");
                 csv.append("Налог (УСН 6%);").append(formatDecimal(currentReport.getTaxAmount())).append("\n");
 
-                // Чистая прибыль (если есть в DTO, иначе рассчитываем)
+
                 BigDecimal netProfit = currentReport.getProfit().subtract(currentReport.getTaxAmount());
                 csv.append("ЧИСТАЯ ПРИБЫЛЬ;").append(formatDecimal(netProfit)).append("\n");
 
-                // 3. Запись в файл с UTF-8+BOM для корректного открытия в Excel
+                //  Запись в файл с UTF-8+BOM для корректного открытия в Excel
                 try (BufferedWriter writer = new BufferedWriter(
                         new FileWriter(file, java.nio.charset.Charset.forName("UTF-8")))) {
                     writer.write('\ufeff'); // BOM для Excel
@@ -158,9 +156,7 @@ public class ReportsController implements Initializable {
         }
     }
 
-    /**
-     * Форматирование BigDecimal для отображения
-     */
+
     private String formatDecimal(BigDecimal value) {
         if (value == null) return "0.00";
         return String.format("%.2f", value);

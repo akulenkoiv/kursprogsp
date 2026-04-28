@@ -117,11 +117,11 @@ public class BudgetDAOImpl implements BudgetDAO {
         }
     }
 
-    // ✅ ИСПРАВЛЕНО: Поиск бюджета по Месяцу и Году, а не по точному дню
+
     @Override
     public List<Budget> findByUserIdAndPeriod(int userId, LocalDate period) throws Exception {
         List<Budget> list = new ArrayList<>();
-        // Ищем все бюджеты пользователя, у которых совпадают Месяц и Год с выбранной датой
+
         String sql = "SELECT * FROM budgets WHERE user_id = ? AND MONTH(period) = ? AND YEAR(period) = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {

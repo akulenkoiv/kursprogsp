@@ -35,13 +35,13 @@ public class MainController {
     }
 
     private void applyRoleRestrictions(int roleId) {
-        // Ограничения для Бухгалтера
+
         if (roleId == Roles.ACCOUNTANT.getLevel()) {
             if (btnReferences != null) btnReferences.setVisible(false);
             if (btnBudget != null) btnBudget.setVisible(false);
         }
 
-        // Ограничения для всех, кроме Администратора
+
         if (roleId != Roles.ADMIN.getLevel()) {
             if (btnSettings != null) btnSettings.setVisible(false);
         }
@@ -84,18 +84,18 @@ public class MainController {
 
     @FXML
     void handleLogout(ActionEvent event) {
-        // 1. Принудительно закрываем сокет
+        // Принудительно закрываем сокет
         ClientSocket.getInstance().disconnect();
 
         try {
-            // 2. Делаем паузу 300мс, чтобы ОС успела освободить порт (решает проблему timeout)
+            // Делаем паузу 300мс, чтобы ОС успела освободить порт (из-за timeout)
             Thread.sleep(300);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
 
         try {
-            // 3. Возвращаемся на экран входа
+            // Возвращаемся на экран входа
             Parent root = FXMLLoader.load(getClass().getResource("/fxml/login.fxml"));
             ClientApp.getPrimaryStage().setScene(new Scene(root));
             ClientApp.getPrimaryStage().setTitle("Вход");

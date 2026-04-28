@@ -58,7 +58,7 @@ public class BudgetController implements Initializable {
         cbType.getItems().addAll("Доход", "Расход");
         cbType.getSelectionModel().selectFirst();
 
-        // Устанавливаем дату по умолчанию (1-е число текущего месяца)
+        // 1-е число текущего месяца
         LocalDate defaultDate = LocalDate.now().withDayOfMonth(1);
         dpPeriod.setValue(defaultDate);
 
@@ -90,8 +90,6 @@ public class BudgetController implements Initializable {
         setupActionColumn();
         tableBudgets.setItems(budgetList);
 
-        // ✅ АВТООБНОВЛЕНИЕ: при смене даты в DatePicker таблица перезагружается
-        // Теперь система будет искать бюджет на весь выбранный месяц
         dpPeriod.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 System.out.println("[UI] Дата изменена на: " + newVal + " (ищем бюджет на этот месяц)");
@@ -149,7 +147,7 @@ public class BudgetController implements Initializable {
         System.out.println("[Client] Загрузка бюджетов за месяц: " + selectedDate.getMonth() + " " + selectedDate.getYear());
 
         try {
-            // Отправляем выбранную дату. Сервер сам поймет, что нужно искать бюджет на весь этот месяц.
+
             Request req = new Request(RequestType.GET_BUDGET_REPORT,
                     GsonUtil.getGson().toJson(new DateRangeDTO(selectedDate, selectedDate)));
 
@@ -160,12 +158,11 @@ public class BudgetController implements Initializable {
                 List<BudgetReportDTO> items = GsonUtil.getGson().fromJson(resp.getData(),
                         new com.google.gson.reflect.TypeToken<List<BudgetReportDTO>>(){}.getType());
 
-                // ✅ ОБНОВЛЕНИЕ В JAVA FX ПОТОКЕ
                 javafx.application.Platform.runLater(() -> {
                     budgetList.clear();
                     if (items != null) {
                         budgetList.addAll(items);
-                        tableBudgets.refresh(); // Принудительное обновление визуала
+                        tableBudgets.refresh();
                     }
                     System.out.println("[Client] Отображено записей: " + budgetList.size());
                 });
@@ -193,7 +190,7 @@ public class BudgetController implements Initializable {
         }
 
         try {
-            // Безопасная обработка суммы
+
             String safeAmount = rawAmount.replace(",", ".").replaceAll("\\s+", "");
             if (!safeAmount.matches("^\\d+(\\.\\d+)?$")) {
                 showMessage("Некорректная сумма. Используйте только цифры и точку.", true);
@@ -207,8 +204,6 @@ public class BudgetController implements Initializable {
 
             BudgetDTO dto = new BudgetDTO();
 
-            // ✅ ИСПРАВЛЕНО: Бюджет всегда привязывается к 1-му числу месяца.
-            // Это стандартная практика: "Бюджет на Апрель" хранится как "01.04.2026".
             dto.setPeriod(selectedDate.withDayOfMonth(1));
 
             dto.setType(typeEnglish);
@@ -235,7 +230,7 @@ public class BudgetController implements Initializable {
             if (resp != null && resp.getStatus() == ResponseStatus.OK) {
                 showMessage("Бюджет успешно добавлен!", false);
                 clearForm();
-                loadBudgets(); // Обновляем таблицу
+                loadBudgets();
             } else {
                 showMessage("Ошибка: " + (resp != null ? resp.getMessage() : "Нет ответа"), true);
             }
@@ -359,7 +354,7 @@ public class BudgetController implements Initializable {
 
     private void clearForm() {
         cbType.getSelectionModel().selectFirst();
-        // Не сбрасываем дату
+
         txtPlannedAmount.setText("0.00");
         txtCategoryId.clear();
         currentEditing = null;
